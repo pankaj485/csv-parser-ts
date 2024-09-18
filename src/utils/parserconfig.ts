@@ -1,8 +1,5 @@
 import path from "path";
-interface ParserConfig {
-  headerRow: number;
-  filePath: string;
-}
+import { ParserConfig } from "../types/parser";
 
 export const parserConfig: ParserConfig = {
   headerRow: 1,
