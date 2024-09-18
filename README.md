@@ -32,7 +32,7 @@ Open the browser and hit the following URL:
 
 Following will be the structure of the response:
 
-```json
+```text
 {
   success: boolean,
   message: string,
