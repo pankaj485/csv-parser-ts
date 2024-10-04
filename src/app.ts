@@ -1,9 +1,17 @@
 const express = require("express");
+const cors = require("cors");
 import { Express, NextFunction, Request, Response } from "express";
 import { apiV1AppRoute } from "./routes/v1/app.route";
 
 const app: Express = express();
+
 app.use(express.json());
+app.use(
+  cors({
+    origin: "*",
+  })
+);
+
 const PORT = 3000;
 
 type GlobalCatchMiddleware = (
