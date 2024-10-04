@@ -13,6 +13,7 @@ client
   .setKey(APPWRITE_API_KEY);
 
 const storage = new sdk.Storage(client);
+
 const getCsvHeaders = async (req: Request, res: Response) => {
   try {
     const { fileId } = req.body;
@@ -39,17 +40,45 @@ const getCsvHeaders = async (req: Request, res: Response) => {
     );
 
     const data = file.toString("utf-8");
+    const headerIndex = 0;
 
     const commaSeparatedData = data.split("\r");
-    const headers = commaSeparatedData[0].split(",");
+    const headers = commaSeparatedData[headerIndex].split(",");
+    let parsedData: {
+      [key: string]: string;
+    }[] = [];
+
+    commaSeparatedData.forEach((currentRow, currentRowDataIndex) => {
+      const currentRowData = currentRow.split(",");
+      let data: {
+        [key: string]: string;
+      } = {};
+
+      if (
+        currentRowDataIndex > headerIndex &&
+        currentRowData.length === headers.length
+      ) {
+        headers.forEach((currentHeader, currentHeaderIndex) => {
+          data[currentHeader] = String(
+            currentRowData[currentHeaderIndex]
+          ).trim();
+        });
+
+        parsedData.push(data);
+      }
+    });
 
     return res.status(200).json({
       success: true,
       message: "headers retrived",
       headers,
+      parsedData,
     });
   } catch (error) {
-    return;
+    return res.status(500).json({
+      success: false,
+      message: "error retriving headers",
+    });
   }
 };
 
