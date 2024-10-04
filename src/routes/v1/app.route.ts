@@ -1,6 +1,7 @@
 import express, { Router } from "express";
 import { sayHello } from "../../controllers/app.controller";
-import { getCsvHeaders, parseCsv } from "../../controllers/parser.controller";
+import { parseCsv } from "../../controllers/parser.controller";
+import { getCsvHeaders } from "../../controllers/appwrite.controller";
 
 const router: Router = express.Router();
 
