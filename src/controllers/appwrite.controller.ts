@@ -20,8 +20,8 @@ const getCsvHeaders = async (req: Request, res: Response) => {
 
     const fieldIdSchema = z
       .string({
-        required_error: "FieldId is required",
-        invalid_type_error: "FieldId must be a string",
+        required_error: "File Id is required",
+        invalid_type_error: "File Idmust be a string",
       })
       .trim();
 
@@ -44,6 +44,66 @@ const getCsvHeaders = async (req: Request, res: Response) => {
 
     const commaSeparatedData = data.split("\r");
     const headers = commaSeparatedData[headerIndex].split(",");
+
+    return res.status(200).json({
+      success: true,
+      message: "headers retrived",
+      headers,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "error retriving headers",
+    });
+  }
+};
+
+const parseDataByHeaders = async (req: Request, res: Response) => {
+  try {
+    const requestBodySchema = z.object({
+      fileId: z
+        .string({
+          required_error: "File Id is required",
+          invalid_type_error: "File Idmust be a string",
+        })
+        .trim(),
+      headers: z
+        .array(z.string(), {
+          required_error: "At least 1 header required",
+          invalid_type_error: "Headers must be a string",
+        })
+        .min(1),
+    });
+
+    const requestBody = requestBodySchema.safeParse(req.body);
+
+    if (!requestBody.success) {
+      return res.status(400).json({
+        success: false,
+        message: requestBody.error.errors,
+      });
+    }
+
+    const { fileId, headers: requestedHeaders } = requestBody.data;
+
+    const file = await storage.getFileView(APPWRITE_BUCKET_ID, fileId);
+
+    const data = file.toString("utf-8");
+    const headerIndex = 0;
+
+    const commaSeparatedData = data.split("\r");
+    const fileHeaders = commaSeparatedData[headerIndex].split(",");
+    const validHeaders = requestedHeaders.filter((currentHeader) =>
+      fileHeaders.includes(currentHeader)
+    );
+
+    if (!validHeaders.length) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid header info. At least 1 valid header required",
+      });
+    }
+
     let parsedData: {
       [key: string]: string;
     }[] = [];
@@ -56,9 +116,9 @@ const getCsvHeaders = async (req: Request, res: Response) => {
 
       if (
         currentRowDataIndex > headerIndex &&
-        currentRowData.length === headers.length
+        currentRowData.length === fileHeaders.length
       ) {
-        headers.forEach((currentHeader, currentHeaderIndex) => {
+        validHeaders.forEach((currentHeader, currentHeaderIndex) => {
           data[currentHeader] = String(
             currentRowData[currentHeaderIndex]
           ).trim();
@@ -71,8 +131,7 @@ const getCsvHeaders = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       message: "headers retrived",
-      headers,
-      parsedData,
+      data: parsedData,
     });
   } catch (error) {
     return res.status(500).json({
@@ -82,4 +141,4 @@ const getCsvHeaders = async (req: Request, res: Response) => {
   }
 };
 
-export { getCsvHeaders };
+export { getCsvHeaders, parseDataByHeaders };
