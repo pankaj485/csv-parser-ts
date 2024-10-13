@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import sdk from "node-appwrite";
+import sdk, { ID, InputFile } from "node-appwrite";
 import { z } from "zod";
 
 const { APPWRITE_API_KEY, APPWRITE_BUCKET_ID, APPWRITE_PROJECT_ID } =
@@ -13,50 +13,6 @@ client
   .setKey(APPWRITE_API_KEY);
 
 const storage = new sdk.Storage(client);
-
-const getCsvHeaders = async (req: Request, res: Response) => {
-  try {
-    const { fileId } = req.body;
-
-    const fieldIdSchema = z
-      .string({
-        required_error: "File Id is required",
-        invalid_type_error: "File Idmust be a string",
-      })
-      .trim();
-
-    const requestedFile = fieldIdSchema.safeParse(fileId);
-
-    if (!requestedFile.success) {
-      return res.status(400).json({
-        success: false,
-        message: requestedFile.error.errors[0].message,
-      });
-    }
-
-    const file = await storage.getFileView(
-      APPWRITE_BUCKET_ID,
-      requestedFile.data
-    );
-
-    const data = file.toString("utf-8");
-    const headerIndex = 0;
-
-    const commaSeparatedData = data.split("\r");
-    const headers = commaSeparatedData[headerIndex].split(",");
-
-    return res.status(200).json({
-      success: true,
-      message: "headers retrived",
-      headers,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "error retriving headers",
-    });
-  }
-};
 
 const parseDataByHeaders = async (req: Request, res: Response) => {
   try {
@@ -141,4 +97,42 @@ const parseDataByHeaders = async (req: Request, res: Response) => {
   }
 };
 
-export { getCsvHeaders, parseDataByHeaders };
+const uploadFile = async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: true,
+        message: "file not uploaded",
+      });
+    }
+
+    const fileUploadRes = await storage.createFile(
+      APPWRITE_BUCKET_ID,
+      ID.unique(),
+      InputFile.fromPath(req.file.path, req.file.originalname)
+    );
+
+    const { $id: fileId } = fileUploadRes;
+
+    const file = await storage.getFileView(APPWRITE_BUCKET_ID, fileId);
+    const data = file.toString("utf-8");
+    const headerIndex = 0;
+
+    const commaSeparatedData = data.split("\r");
+    const headers = commaSeparatedData[headerIndex].split(",");
+
+    return res.status(200).json({
+      success: true,
+      message: "file uploaded",
+      fileId,
+      headers,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "error uploading file",
+    });
+  }
+};
+
+export { parseDataByHeaders, uploadFile };
