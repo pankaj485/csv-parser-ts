@@ -135,4 +135,29 @@ const uploadFile = async (req: Request, res: Response) => {
   }
 };
 
-export { parseDataByHeaders, uploadFile };
+const listFiles = async (req: Request, res: Response) => {
+  try {
+    const files = (await storage.listFiles(APPWRITE_BUCKET_ID)).files;
+
+    const data = files.map((file) => {
+      return {
+        name: file.name,
+        fileId: file.$id,
+        created_at: file.$createdAt,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "data retrived successfully",
+      filesList: data,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "error getting files",
+    });
+  }
+};
+
+export { parseDataByHeaders, uploadFile, listFiles };

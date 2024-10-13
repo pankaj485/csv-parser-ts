@@ -2,6 +2,7 @@ import express, { Router } from "express";
 import { sayHello } from "../../controllers/app.controller";
 import { parseCsv } from "../../controllers/parser.controller";
 import {
+  listFiles,
   parseDataByHeaders,
   uploadFile,
 } from "../../controllers/appwrite.controller";
@@ -13,5 +14,6 @@ router.get("/", sayHello);
 router.get("/csv-parser", parseCsv);
 router.post("/get-csv-data-by-headers", parseDataByHeaders);
 router.post("/upload-file", upload.single("csvfile"), uploadFile);
+router.get("/list-files", listFiles);
 
 export { router as apiV1AppRoute };
