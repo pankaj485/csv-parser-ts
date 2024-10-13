@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 import { Express, NextFunction, Request, Response } from "express";
 import { apiV1AppRoute } from "./routes/v1/app.route";
+import { baseRoutes } from "./routes/base.route";
 
 const app: Express = express();
 
@@ -28,6 +29,7 @@ const globalCatch: GlobalCatchMiddleware = (error, req, res, next) => {
   });
 };
 
+app.use("/", baseRoutes);
 app.use("/api/v1", apiV1AppRoute);
 
 // global catch
