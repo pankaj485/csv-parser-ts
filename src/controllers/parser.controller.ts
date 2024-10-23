@@ -1,5 +1,6 @@
 import { parse } from "csv-parse";
 import "dotenv/config";
+import path from "node:path";
 import { Request, Response } from "express";
 import fs from "fs";
 import { ParsedData } from "../types/parser";
@@ -12,7 +13,7 @@ const parseCsv = async (req: Request, res: Response) => {
   if (!fs.existsSync(filePath)) {
     return res.status(400).json({
       success: false,
-      message: "File not found",
+      message: `File not found. Make sure '${filePath}' exists`,
     });
   }
 
