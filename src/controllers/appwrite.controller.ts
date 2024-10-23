@@ -106,6 +106,18 @@ const uploadFile = async (req: Request, res: Response) => {
       });
     }
 
+    const fileName = req.file.originalname;
+    const isValidFormat =
+      fileName.split(".")[fileName.split(".").length - 1] === "csv";
+    const isValidMimeType = req.file.mimetype === "text/csv";
+
+    if (!isValidFormat || !isValidMimeType) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid file type. Only .csv files are allowed",
+      });
+    }
+
     const fileUploadRes = await storage.createFile(
       APPWRITE_BUCKET_ID,
       ID.unique(),
