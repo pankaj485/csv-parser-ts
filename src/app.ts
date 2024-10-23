@@ -13,7 +13,7 @@ app.use(
   })
 );
 
-const PORT = 3000;
+const PORT = process.env.PORT || 8000;
 
 type GlobalCatchMiddleware = (
   err: Error,
