@@ -159,10 +159,15 @@ const listFiles = async (req: Request, res: Response) => {
       };
     });
 
+    if (data.length > 25) {
+      data.forEach(async (file) => {
+        await storage.deleteFile(APPWRITE_BUCKET_ID, file.fileId);
+      });
+    }
+
     return res.status(200).json({
       success: true,
-      message: "data retrived successfully",
-      filesList: data,
+      message: "server is up and running",
     });
   } catch (error) {
     return res.status(400).json({
