@@ -118,6 +118,8 @@ const uploadFile = async (req: Request, res: Response) => {
       });
     }
 
+    await validateBucketStatus();
+
     const fileUploadRes = await storage.createFile(
       APPWRITE_BUCKET_ID,
       ID.unique(),
@@ -177,4 +179,46 @@ const listFiles = async (req: Request, res: Response) => {
   }
 };
 
-export { parseDataByHeaders, uploadFile, listFiles };
+const validateBucketStatus = async () => {
+  try {
+    const { total } = await storage.listFiles(APPWRITE_BUCKET_ID);
+
+    if (total > 120) {
+      await storage.deleteBucket(APPWRITE_BUCKET_ID);
+
+      const bucketConfig = {
+        permissions: ['create("any")', 'read("any")'],
+        fileSecurity: false,
+        name: "csv-files",
+        enabled: true,
+        maximumFileSize: 50000000,
+        allowedFileExtensions: ["csv"],
+        compression: "none",
+        encryption: true,
+        antivirus: true,
+      };
+
+      const res = await storage.createBucket(
+        APPWRITE_BUCKET_ID,
+        bucketConfig.name,
+        bucketConfig.permissions,
+        bucketConfig.fileSecurity,
+        bucketConfig.enabled,
+        bucketConfig.maximumFileSize,
+        bucketConfig.allowedFileExtensions,
+        bucketConfig.compression,
+        bucketConfig.encryption,
+        bucketConfig.antivirus
+      );
+    }
+  } catch (error) {
+    console.log("error validating bucket");
+  }
+};
+
+export {
+  parseDataByHeaders,
+  uploadFile,
+  listFiles,
+  validateBucketStatus as validateBucket,
+};
