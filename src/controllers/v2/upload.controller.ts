@@ -4,6 +4,7 @@ import {
   isValidFileFormat,
   validateUploadDir,
 } from "../../middlewares/v2/multer";
+import { uploadCsvFileV2 } from "./appwrite.controller";
 
 const uploadCsvFile = (req: Request, res: Response) => {
   validateUploadDir();
@@ -39,10 +40,19 @@ const uploadCsvFile = (req: Request, res: Response) => {
         });
       }
 
+      const uploadRes = await uploadCsvFileV2(csvFile);
+
+      if (!uploadRes) {
+        return res.status(500).json({
+          success: false,
+          message: "Error uploading file",
+        });
+      }
+
       return res.status(200).json({
         success: true,
         messge: "File uploaded successfully",
-        csvFile,
+        fileId: uploadRes,
       });
     });
   } catch (error) {
