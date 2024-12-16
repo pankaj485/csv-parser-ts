@@ -4,7 +4,8 @@ import {
   isValidFileFormat,
   validateUploadDir,
 } from "../../middlewares/v2/multer";
-import { uploadCsvFileV2 } from "./appwrite.controller";
+import { getFileDataByIdV2, uploadCsvFileV2 } from "./appwrite.controller";
+import { z } from "zod";
 
 const uploadCsvFile = (req: Request, res: Response) => {
   validateUploadDir();
@@ -63,4 +64,44 @@ const uploadCsvFile = (req: Request, res: Response) => {
   }
 };
 
-export { uploadCsvFile };
+const getFileHeaders = async (req: Request, res: Response) => {
+  try {
+    const shema = z.object({
+      file_id: z.string({
+        required_error: "File Id is required",
+        invalid_type_error: "File Id must be a string",
+      }),
+      header_row: z
+        .number({
+          invalid_type_error: "Header row must be greater than or equal to 1",
+        })
+        .gte(1)
+        .default(1),
+    });
+
+    const requestBody = shema.safeParse(req.body);
+
+    if (!requestBody.success) {
+      return res.status(400).json({
+        success: false,
+        message: requestBody.error.errors,
+      });
+    }
+
+    const { file_id, header_row } = requestBody.data;
+    const fileHeaders = await getFileDataByIdV2(file_id, header_row);
+
+    return res.status(200).json({
+      success: true,
+      message: "File headers received successfully",
+      data: fileHeaders.split(","),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error getting file header",
+    });
+  }
+};
+
+export { uploadCsvFile, getFileHeaders };
