@@ -41,19 +41,30 @@ const parseDataByHeaders = async (req: Request, res: Response) => {
     }
 
     const { fileId, headers: requestedHeaders } = requestBody.data;
-
     const file = await storage.getFileView(APPWRITE_BUCKET_ID, fileId);
-
     const data = file.toString("utf-8");
     const headerIndex = 0;
 
     const commaSeparatedData = data.split("\r");
     const fileHeaders = commaSeparatedData[headerIndex].split(",");
-    const validHeaders = requestedHeaders.filter((currentHeader) =>
-      fileHeaders.includes(currentHeader)
-    );
 
-    if (!validHeaders.length) {
+    function getExactMatchingHeaders(
+      fileHeaders: string[],
+      requestedHeaders: string[]
+    ) {
+      const requestedSet = new Set(requestedHeaders);
+      const res: { [key: string]: number } = {};
+      fileHeaders
+        .filter((header) => requestedSet.has(header))
+        .forEach((header) => {
+          res[header] = fileHeaders.indexOf(header);
+        });
+
+      return res;
+    }
+    const validHeaders = getExactMatchingHeaders(fileHeaders, requestedHeaders);
+
+    if (!Object.keys(validHeaders).length) {
       return res.status(400).json({
         success: false,
         message: "invalid header info. At least 1 valid header required",
@@ -74,10 +85,9 @@ const parseDataByHeaders = async (req: Request, res: Response) => {
         currentRowDataIndex > headerIndex &&
         currentRowData.length === fileHeaders.length
       ) {
-        validHeaders.forEach((currentHeader, currentHeaderIndex) => {
-          data[currentHeader] = String(
-            currentRowData[currentHeaderIndex]
-          ).trim();
+        Object.keys(validHeaders).forEach((currentHeader) => {
+          const dataIndex = validHeaders[currentHeader];
+          data[currentHeader] = String(currentRowData[dataIndex]).trim();
         });
 
         parsedData.push(data);
