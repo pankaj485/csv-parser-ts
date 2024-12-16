@@ -35,11 +35,11 @@ const uploadFile = async (file: Express.Multer.File) => {
   }
 };
 
-const getFileDataById = async (fileId: string, header_row: number) => {
+const getFileHeadersById = async (fileId: string, header_row: number) => {
   const fileBuffer = await storage.getFileView(APPWRITE_BUCKET_ID, fileId);
   const data = fileBuffer.toString("utf-8");
   const fileHeaders = data.split("\r\n")[header_row - 1];
-  return fileHeaders;
+  return fileHeaders.split(",");
 };
 
 const validateStorageAvailability = async () => {
@@ -84,4 +84,15 @@ const validateStorageAvailability = async () => {
   }
 };
 
-export { uploadFile as uploadCsvFileV2, getFileDataById as getFileDataByIdV2 };
+const getFileDataById = async (fileId: string) => {
+  const fileBuffer = await storage.getFileView(APPWRITE_BUCKET_ID, fileId);
+  const data = fileBuffer.toString("utf-8");
+  const fileData = data.split("\r\n");
+  return fileData;
+};
+
+export {
+  uploadFile as uploadCsvFileV2,
+  getFileHeadersById as getFileHeadersByIdV2,
+  getFileDataById as getFileDataByIdV2,
+};
