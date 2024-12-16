@@ -26,13 +26,16 @@ const uploadCsvFile = (req: Request, res: Response) => {
       }
 
       const csvFile = req.file;
-      const validFileFormat = "text/csv";
-      const isValidFile = isValidFileFormat(csvFile, validFileFormat);
+      const isValidFile = isValidFileFormat({
+        file: csvFile,
+        extension: "csv",
+        mimeType: "text/csv",
+      });
 
       if (!isValidFile) {
         return res.status(200).json({
           success: false,
-          message: "Invalid file foramt. Valid format: " + validFileFormat,
+          message: "Invalid file foramt. Valid format: '.csv'",
         });
       }
 

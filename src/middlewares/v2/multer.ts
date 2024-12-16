@@ -18,12 +18,20 @@ const validateUploadDir = () => {
   }
 };
 
-const isValidFileFormat = (
-  file: Express.Multer.File,
-  format: string
-): boolean => {
-  const fileForamt = file.mimetype;
-  return fileForamt === format;
+const isValidFileFormat = (args: {
+  file: Express.Multer.File;
+  mimeType: string;
+  extension: string;
+}): boolean => {
+  const {
+    file: { mimetype, originalname: fileName },
+    extension,
+    mimeType,
+  } = args;
+  const isValidExtension =
+    fileName.split(".")[fileName.split(".").length - 1] === extension;
+
+  return mimetype === mimeType || !isValidExtension;
 };
 
 const csvUploadConfig = multer({ storage: storageConfig }).single("csvfile");
