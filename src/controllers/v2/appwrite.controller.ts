@@ -28,6 +28,8 @@ const uploadFile = async (file: Express.Multer.File) => {
       InputFile.fromStream(fs.createReadStream(file.path), fileName, size)
     );
 
+    fs.unlinkSync(file.path);
+
     return fileUploadRes.$id;
   } catch (error) {
     console.log("error uploading file to bucket: ", error);
