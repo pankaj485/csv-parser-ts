@@ -1,4 +1,5 @@
 import cors from "cors";
+import "dotenv/config";
 import express, { Express, NextFunction, Request, Response } from "express";
 import helmet from "helmet";
 import { apiV2Route } from "./routes/apiv2.route";
@@ -8,11 +9,7 @@ const app: Express = express();
 
 app.use(helmet());
 app.use(express.json());
-app.use(
-  cors({
-    origin: "*",
-  })
-);
+app.use(cors({ origin: "*" }));
 
 const PORT = process.env.PORT || 8000;
 
