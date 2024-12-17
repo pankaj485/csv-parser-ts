@@ -3,8 +3,8 @@ import {
   getFileDataByHeaders,
   getFileHeaders,
   uploadCsvFile,
-} from "../controllers/v2/upload.controller";
-import { validateFilePayload } from "../middlewares/v2/upload.middleware";
+} from "../controllers/upload.controller";
+import { validateFilePayload } from "../utils/middlewares";
 const route = express.Router();
 
 route.post("/upload-file", uploadCsvFile);

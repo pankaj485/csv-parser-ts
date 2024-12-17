@@ -3,7 +3,7 @@ import {
   csvUploadConfig,
   isValidFileFormat,
   validateUploadDir,
-} from "../../middlewares/v2/multer";
+} from "../utils/multer";
 import {
   getFileDataByIdV2,
   getFileHeadersByIdV2,

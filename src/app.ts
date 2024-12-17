@@ -1,12 +1,12 @@
-const express = require("express");
-const cors = require("cors");
-import { Express, NextFunction, Request, Response } from "express";
-import { apiV1AppRoute } from "./routes/v1/app.route";
-import { baseRoutes } from "./routes/base.route";
+import cors from "cors";
+import express, { Express, NextFunction, Request, Response } from "express";
+import helmet from "helmet";
 import { apiV2Route } from "./routes/apiv2.route";
+import { baseRoutes } from "./routes/base.route";
 
 const app: Express = express();
 
+app.use(helmet());
 app.use(express.json());
 app.use(
   cors({
@@ -31,7 +31,6 @@ const globalCatch: GlobalCatchMiddleware = (error, req, res, next) => {
 };
 
 app.use("/", baseRoutes);
-app.use("/api/v1", apiV1AppRoute);
 app.use("/api/v2", apiV2Route);
 
 // global catch
