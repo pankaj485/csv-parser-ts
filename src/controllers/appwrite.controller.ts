@@ -1,4 +1,4 @@
-import sdk, { ID, InputFile } from "node-appwrite";
+import sdk, { ID, InputFile, Query } from "node-appwrite";
 import fs from "node:fs";
 
 const { APPWRITE_API_KEY, APPWRITE_BUCKET_ID, APPWRITE_PROJECT_ID } =
@@ -93,8 +93,25 @@ const getFileDataById = async (fileId: string) => {
   return fileData;
 };
 
+const getFilesList = async () => {
+  try {
+    const query: string[] = [Query.orderDesc("$createdAt"), Query.limit(150)];
+    const filesList = await storage.listFiles(APPWRITE_BUCKET_ID, query);
+
+    return filesList.files.map((file) => {
+      return {
+        uploaded_at: file.$createdAt.split("T")[0],
+        file_name: file.name,
+      };
+    });
+  } catch (error) {
+    return null;
+  }
+};
+
 export {
-  uploadFile as uploadCsvFileV2,
-  getFileHeadersById as getFileHeadersByIdV2,
   getFileDataById as getFileDataByIdV2,
+  getFileHeadersById as getFileHeadersByIdV2,
+  getFilesList as getFilesListV2,
+  uploadFile as uploadCsvFileV2,
 };

@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { z } from "zod";
 import {
   csvUploadConfig,
   isValidFileFormat,
@@ -7,9 +8,9 @@ import {
 import {
   getFileDataByIdV2,
   getFileHeadersByIdV2,
+  getFilesListV2,
   uploadCsvFileV2,
 } from "./appwrite.controller";
-import { z } from "zod";
 
 const uploadCsvFile = (req: Request, res: Response) => {
   validateUploadDir();
@@ -168,4 +169,27 @@ const getFileDataByHeaders = async (req: Request, res: Response) => {
   }
 };
 
-export { uploadCsvFile, getFileHeaders, getFileDataByHeaders };
+const getFilesList = async (req: Request, res: Response) => {
+  try {
+    const files = await getFilesListV2();
+
+    if (!files) {
+      return res.status(400).json({
+        success: true,
+        message: "error getting files list",
+      });
+    }
+
+    return res.status(200).json({
+      total_files: files.length,
+      files,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error getting files list",
+    });
+  }
+};
+
+export { getFileDataByHeaders, getFileHeaders, getFilesList, uploadCsvFile };
