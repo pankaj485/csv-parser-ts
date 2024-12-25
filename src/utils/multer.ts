@@ -2,7 +2,7 @@ import multer from "multer";
 import path from "node:path";
 import fs from "node:fs";
 
-const fileUploadPath = path.resolve(__dirname, "../../../public/uploads");
+const fileUploadPath = path.resolve(__dirname, "../../public/uploads");
 
 const storageConfig: multer.StorageEngine = multer.diskStorage({
   destination: fileUploadPath,
