@@ -2,14 +2,22 @@ import { Request, Response, Router } from "express";
 
 const router = Router();
 
+const baseURL = "https://csv-parser-ts.koyeb.app";
+const apiVersion = "api/v2";
+
+const APIS = {
+  upload: `POST: ${baseURL}/${apiVersion}/file-upload`,
+  headers: `POST: ${baseURL}/${apiVersion}/get-file-headers`,
+  data: `POST: ${baseURL}/${apiVersion}/get-file-data`,
+  list: `GET: ${baseURL}/${apiVersion}/get-files-list`,
+};
+
 router.get("", (req: Request, res: Response) => {
-  return res.status(400).json({
-    "GET: api/v1/": "endpoint to validate if server is running or not",
-    "GET: api/v1/csv-parser": "parse file by uploading directly to disk",
-    "POST: api/v1/get-csv-data-by-headers":
-      "get json data based on provided headers",
-    "POST: api/v1/upload-file": "upload file and get headers of the csv file",
-    "GET: api/v1/list-files": "get list of uploaded files on bucket",
+  return res.status(200).json({
+    [APIS.upload]: "upload csv file",
+    [APIS.headers]: "get file headers",
+    [APIS.data]: "get file data",
+    [APIS.list]: "get list of uploaded files",
   });
 });
 
