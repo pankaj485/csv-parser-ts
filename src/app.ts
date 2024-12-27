@@ -1,10 +1,17 @@
-const express = require("express");
-import { Express, NextFunction, Request, Response } from "express";
-import { apiV1AppRoute } from "./routes/v1/app.route";
+import cors from "cors";
+import "dotenv/config";
+import express, { Express, NextFunction, Request, Response } from "express";
+import helmet from "helmet";
+import { apiV2Route } from "./routes/apiv2.route";
+import { baseRoutes } from "./routes/base.route";
 
 const app: Express = express();
+
+app.use(helmet());
 app.use(express.json());
-const PORT = 3000;
+app.use(cors({ origin: "*" }));
+
+const PORT = process.env.PORT || 8000;
 
 type GlobalCatchMiddleware = (
   err: Error,
@@ -20,7 +27,8 @@ const globalCatch: GlobalCatchMiddleware = (error, req, res, next) => {
   });
 };
 
-app.use("/api/v1", apiV1AppRoute);
+app.use("/", baseRoutes);
+app.use("/api/v2", apiV2Route);
 
 // global catch
 app.use(globalCatch);
