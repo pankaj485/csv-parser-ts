@@ -1,4 +1,4 @@
-import sdk, { ID, InputFile, Query } from "node-appwrite";
+import sdk, { ID, InputFile, Permission, Query, Role } from "node-appwrite";
 import fs from "node:fs";
 
 const {
@@ -19,8 +19,8 @@ client
 const storage = new sdk.Storage(client);
 const databases = new sdk.Databases(client);
 
-interface FileCollection {
-  fileName: string;
+interface FileData {
+  filename: string;
   date: Date;
 }
 
@@ -40,6 +40,11 @@ const uploadFile = async (file: Express.Multer.File) => {
     );
 
     fs.unlinkSync(file.path);
+
+    await insertFileData({
+      filename: fileName,
+      date: new Date(),
+    });
 
     return fileUploadRes.$id;
   } catch (error) {
@@ -155,14 +160,46 @@ const validateDbAvailability = async () => {
         APPWRITE_DB_ID,
         APPWRITE_COLLECTION_ID,
         "csv-files-data",
-        [],
+        [Permission.create(Role.any()), Permission.read(Role.any())],
         false,
         true
       );
+
+      await databases.createStringAttribute(
+        APPWRITE_DB_ID,
+        APPWRITE_COLLECTION_ID,
+        "filename",
+        100,
+        true,
+        undefined,
+        false,
+        false
+      );
+
+      await databases.createDatetimeAttribute(
+        APPWRITE_DB_ID,
+        APPWRITE_COLLECTION_ID,
+        "date",
+        true,
+        undefined,
+        false
+      );
     }
   } catch (error) {
-    console.log("Error creating file entry to DB");
-    console.log(error);
+    console.log("Error validating DB availability");
+  }
+};
+
+const insertFileData = async (data: FileData) => {
+  try {
+    await databases.createDocument(
+      APPWRITE_DB_ID,
+      APPWRITE_COLLECTION_ID,
+      ID.unique(),
+      data
+    );
+  } catch (error) {
+    console.log("eror inserting file data");
   }
 };
 

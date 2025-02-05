@@ -181,8 +181,6 @@ const getFilesList = async (req: Request, res: Response) => {
       });
     }
 
-    await validateDbAvailability();
-
     return res.status(200).json({
       total_files: files.length,
       files,
