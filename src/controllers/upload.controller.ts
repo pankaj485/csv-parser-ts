@@ -10,6 +10,7 @@ import {
   getFileHeadersByIdV2,
   getFilesListV2,
   uploadCsvFileV2,
+  validateDbAvailability,
 } from "./appwrite.controller";
 
 const uploadCsvFile = (req: Request, res: Response) => {
@@ -179,6 +180,8 @@ const getFilesList = async (req: Request, res: Response) => {
         message: "error getting files list",
       });
     }
+
+    await validateDbAvailability();
 
     return res.status(200).json({
       total_files: files.length,

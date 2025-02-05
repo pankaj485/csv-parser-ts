@@ -1,8 +1,13 @@
 import sdk, { ID, InputFile, Query } from "node-appwrite";
 import fs from "node:fs";
 
-const { APPWRITE_API_KEY, APPWRITE_BUCKET_ID, APPWRITE_PROJECT_ID } =
-  process.env;
+const {
+  APPWRITE_API_KEY,
+  APPWRITE_BUCKET_ID,
+  APPWRITE_PROJECT_ID,
+  APPWRITE_DB_ID,
+  APPWRITE_COLLECTION_ID,
+} = process.env;
 
 const client = new sdk.Client();
 
@@ -12,6 +17,12 @@ client
   .setKey(APPWRITE_API_KEY);
 
 const storage = new sdk.Storage(client);
+const databases = new sdk.Databases(client);
+
+interface FileCollection {
+  fileName: string;
+  date: Date;
+}
 
 const uploadFile = async (file: Express.Multer.File) => {
   try {
@@ -109,9 +120,56 @@ const getFilesList = async () => {
   }
 };
 
+const validateDbAvailability = async () => {
+  const dbExists = async () => {
+    try {
+      const db = await databases.get(APPWRITE_DB_ID);
+      return db.name;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const collectionExists = async () => {
+    try {
+      const collection = await databases.getCollection(
+        APPWRITE_DB_ID,
+        APPWRITE_COLLECTION_ID
+      );
+      return collection.name;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  try {
+    const existsDB = await dbExists();
+    const existsCol = await collectionExists();
+
+    if (!existsDB) {
+      await databases.create(APPWRITE_DB_ID, "csv-files", true);
+    }
+
+    if (!existsCol) {
+      await databases.createCollection(
+        APPWRITE_DB_ID,
+        APPWRITE_COLLECTION_ID,
+        "csv-files-data",
+        [],
+        false,
+        true
+      );
+    }
+  } catch (error) {
+    console.log("Error creating file entry to DB");
+    console.log(error);
+  }
+};
+
 export {
   getFileDataById as getFileDataByIdV2,
   getFileHeadersById as getFileHeadersByIdV2,
   getFilesList as getFilesListV2,
   uploadFile as uploadCsvFileV2,
+  validateDbAvailability,
 };
