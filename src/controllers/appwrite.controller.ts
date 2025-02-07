@@ -1,4 +1,4 @@
-import { ID, InputFile, Permission, Role } from "node-appwrite";
+import { ID, InputFile } from "node-appwrite";
 import fs from "node:fs";
 import {
   databases,
@@ -6,11 +6,14 @@ import {
   storage,
   validateBucketCapacity,
   validateCollectionExists,
-  validateDBExits,
 } from "../utils/appwrite";
 
-const { APPWRITE_BUCKET_ID, APPWRITE_DB_ID, APPWRITE_COLLECTION_ID } =
-  process.env;
+const {
+  APPWRITE_BUCKET_ID,
+  APPWRITE_DB_ID,
+  APPWRITE_FILES_DATA_COL_ID,
+  APPWRITE_FILES_COUNTS_COL_ID,
+} = process.env;
 
 const uploadFile = async (file: Express.Multer.File) => {
   try {
@@ -70,58 +73,11 @@ const getFilesList = async () => {
   }
 };
 
-const validateDbAvailability = async () => {
-  try {
-    const existsDB = await validateDBExits(APPWRITE_DB_ID);
-    const existsCol = await validateCollectionExists(
-      APPWRITE_DB_ID,
-      APPWRITE_COLLECTION_ID
-    );
-
-    if (!existsDB) {
-      await databases.create(APPWRITE_DB_ID, "csv-files", true);
-    }
-
-    if (!existsCol) {
-      await databases.createCollection(
-        APPWRITE_DB_ID,
-        APPWRITE_COLLECTION_ID,
-        "csv-files-data",
-        [Permission.create(Role.any()), Permission.read(Role.any())],
-        false,
-        true
-      );
-
-      await databases.createStringAttribute(
-        APPWRITE_DB_ID,
-        APPWRITE_COLLECTION_ID,
-        "filename",
-        100,
-        true,
-        undefined,
-        false,
-        false
-      );
-
-      await databases.createDatetimeAttribute(
-        APPWRITE_DB_ID,
-        APPWRITE_COLLECTION_ID,
-        "date",
-        true,
-        undefined,
-        false
-      );
-    }
-  } catch (error) {
-    console.log("Error validating DB availability");
-  }
-};
-
 const insertFileData = async (data: { filename: string; date: Date }) => {
   try {
     await databases.createDocument(
       APPWRITE_DB_ID,
-      APPWRITE_COLLECTION_ID,
+      APPWRITE_FILES_DATA_COL_ID,
       ID.unique(),
       data
     );
@@ -130,10 +86,24 @@ const insertFileData = async (data: { filename: string; date: Date }) => {
   }
 };
 
+const insertFileStatData = async ({
+  year,
+  month,
+  filesCount,
+}: {
+  year: string;
+  month: number;
+  filesCount: number;
+}) => {
+  console.log(
+    "col data: ",
+    await validateCollectionExists(APPWRITE_DB_ID, APPWRITE_FILES_COUNTS_COL_ID)
+  );
+};
+
 export {
   getFileDataById as getFileDataByIdV2,
   getFileHeadersById as getFileHeadersByIdV2,
   getFilesList as getFilesListV2,
   uploadFile as uploadCsvFileV2,
-  validateDbAvailability,
 };

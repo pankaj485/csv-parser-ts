@@ -10,7 +10,6 @@ import {
   getFileHeadersByIdV2,
   getFilesListV2,
   uploadCsvFileV2,
-  validateDbAvailability,
 } from "./appwrite.controller";
 
 const uploadCsvFile = (req: Request, res: Response) => {

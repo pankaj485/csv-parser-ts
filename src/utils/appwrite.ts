@@ -1,5 +1,11 @@
-import sdk, { Models, Query } from "node-appwrite";
-const { APPWRITE_API_KEY, APPWRITE_PROJECT_ID } = process.env;
+import sdk, { Models, Permission, Query, Role } from "node-appwrite";
+const {
+  APPWRITE_API_KEY,
+  APPWRITE_PROJECT_ID,
+  APPWRITE_DB_ID,
+  APPWRITE_FILES_DATA_COL_ID,
+  APPWRITE_FILES_COUNTS_COL_ID,
+} = process.env;
 
 const client = new sdk.Client();
 
@@ -96,6 +102,116 @@ const getBucketfiles = async (bucketId: string): Promise<Models.FileList> => {
   }
 };
 
+const validateFileDataCollection = async () => {
+  try {
+    const existsDB = await validateDBExits(APPWRITE_DB_ID);
+    const existsCol = await validateCollectionExists(
+      APPWRITE_DB_ID,
+      APPWRITE_FILES_DATA_COL_ID
+    );
+
+    if (!existsDB) {
+      await databases.create(APPWRITE_DB_ID, "csv-files", true);
+    }
+
+    if (!existsCol) {
+      await databases.createCollection(
+        APPWRITE_DB_ID,
+        APPWRITE_FILES_DATA_COL_ID,
+        "csv-files-data",
+        [Permission.create(Role.any()), Permission.read(Role.any())],
+        false,
+        true
+      );
+
+      await databases.createStringAttribute(
+        APPWRITE_DB_ID,
+        APPWRITE_FILES_DATA_COL_ID,
+        "filename",
+        100,
+        true,
+        undefined,
+        false,
+        false
+      );
+
+      await databases.createDatetimeAttribute(
+        APPWRITE_DB_ID,
+        APPWRITE_FILES_DATA_COL_ID,
+        "date",
+        true,
+        undefined,
+        false
+      );
+    }
+  } catch (error) {
+    console.log("Error validating files DB availability");
+  }
+};
+
+const validateFileCountCollection = async () => {
+  try {
+    const dbExists = await validateDBExits(APPWRITE_DB_ID);
+    const colExists = await validateCollectionExists(
+      APPWRITE_DB_ID,
+      APPWRITE_FILES_COUNTS_COL_ID
+    );
+
+    if (!dbExists) {
+      await databases.create(APPWRITE_DB_ID, "csv-files", true);
+    }
+
+    if (!colExists) {
+      console.log("files count DB collection doesn't exists creating");
+      await databases.createCollection(
+        APPWRITE_DB_ID,
+        APPWRITE_FILES_COUNTS_COL_ID,
+        "csv-files-count",
+        [Permission.create(Role.any()), Permission.read(Role.any())],
+        false,
+        true
+      );
+      const currentDate = new Date();
+
+      await databases.createIntegerAttribute(
+        APPWRITE_DB_ID,
+        APPWRITE_FILES_COUNTS_COL_ID,
+        "year",
+        true,
+        undefined,
+        undefined,
+        undefined,
+        false
+      );
+
+      await databases.createIntegerAttribute(
+        APPWRITE_DB_ID,
+        APPWRITE_FILES_COUNTS_COL_ID,
+        "month",
+        true,
+        1,
+        12,
+        undefined,
+        false
+      );
+
+      await databases.createIntegerAttribute(
+        APPWRITE_DB_ID,
+        APPWRITE_FILES_COUNTS_COL_ID,
+        "count",
+        true,
+        0,
+        undefined,
+        undefined,
+        false
+      );
+    }
+  } catch (error) {
+    console.log(error);
+    console.log("Error validating files count DB availability");
+  }
+};
+
 export {
   databases,
   getBucketfiles,
@@ -103,4 +219,6 @@ export {
   validateBucketCapacity,
   validateCollectionExists,
   validateDBExits,
+  validateFileDataCollection,
+  validateFileCountCollection,
 };
