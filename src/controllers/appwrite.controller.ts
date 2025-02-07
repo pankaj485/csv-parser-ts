@@ -1,11 +1,10 @@
-import { ID, InputFile } from "node-appwrite";
+import { ID, InputFile, Query } from "node-appwrite";
 import fs from "node:fs";
 import {
   databases,
   getBucketfiles,
   storage,
   validateBucketCapacity,
-  validateCollectionExists,
 } from "../utils/appwrite";
 
 const {
@@ -36,6 +35,8 @@ const uploadFile = async (file: Express.Multer.File) => {
       filename: fileName,
       date: new Date(),
     });
+
+    await insertFileStatData();
 
     return fileUploadRes.$id;
   } catch (error) {
@@ -86,18 +87,43 @@ const insertFileData = async (data: { filename: string; date: Date }) => {
   }
 };
 
-const insertFileStatData = async ({
-  year,
-  month,
-  filesCount,
-}: {
-  year: string;
-  month: number;
-  filesCount: number;
-}) => {
-  console.log(
-    "col data: ",
-    await validateCollectionExists(APPWRITE_DB_ID, APPWRITE_FILES_COUNTS_COL_ID)
+const insertFileStatData = async () => {
+  const getMatchingDoc = async (data: { year: number; month: number }) => {
+    return await databases.listDocuments(
+      APPWRITE_DB_ID,
+      APPWRITE_FILES_COUNTS_COL_ID,
+      [Query.equal("year", data.year), Query.equal("month", data.month)]
+    );
+  };
+
+  const currentDate = new Date();
+  const data = {
+    year: currentDate.getFullYear(),
+    month: currentDate.getMonth() + 1,
+  };
+
+  const matchingDocuments = await getMatchingDoc(data);
+
+  if (matchingDocuments.total === 0) {
+    await databases.createDocument(
+      APPWRITE_DB_ID,
+      APPWRITE_FILES_COUNTS_COL_ID,
+      ID.unique(),
+      { ...data, count: 1 }
+    );
+
+    return;
+  }
+
+  const validDocument: any = matchingDocuments.documents[0];
+  const documentId = validDocument.$id;
+  const currentCount: number = validDocument["count"];
+
+  await databases.updateDocument(
+    APPWRITE_DB_ID,
+    APPWRITE_FILES_COUNTS_COL_ID,
+    documentId,
+    { ...data, count: currentCount + 1 }
   );
 };
 

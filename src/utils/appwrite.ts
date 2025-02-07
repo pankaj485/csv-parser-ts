@@ -171,7 +171,6 @@ const validateFileCountCollection = async () => {
         false,
         true
       );
-      const currentDate = new Date();
 
       await databases.createIntegerAttribute(
         APPWRITE_DB_ID,
@@ -219,6 +218,6 @@ export {
   validateBucketCapacity,
   validateCollectionExists,
   validateDBExits,
-  validateFileDataCollection,
   validateFileCountCollection,
+  validateFileDataCollection,
 };
