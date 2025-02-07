@@ -1,32 +1,20 @@
-import sdk, { ID, InputFile, Permission, Query, Role } from "node-appwrite";
+import { ID, InputFile, Permission, Role } from "node-appwrite";
 import fs from "node:fs";
+import {
+  databases,
+  getBucketfiles,
+  storage,
+  validateBucketCapacity,
+  validateCollectionExists,
+  validateDBExits,
+} from "../utils/appwrite";
 
-const {
-  APPWRITE_API_KEY,
-  APPWRITE_BUCKET_ID,
-  APPWRITE_PROJECT_ID,
-  APPWRITE_DB_ID,
-  APPWRITE_COLLECTION_ID,
-} = process.env;
-
-const client = new sdk.Client();
-
-client
-  .setEndpoint("https://cloud.appwrite.io/v1")
-  .setProject(APPWRITE_PROJECT_ID)
-  .setKey(APPWRITE_API_KEY);
-
-const storage = new sdk.Storage(client);
-const databases = new sdk.Databases(client);
-
-interface FileData {
-  filename: string;
-  date: Date;
-}
+const { APPWRITE_BUCKET_ID, APPWRITE_DB_ID, APPWRITE_COLLECTION_ID } =
+  process.env;
 
 const uploadFile = async (file: Express.Multer.File) => {
   try {
-    const isStorageAvailable = await validateStorageAvailability();
+    const isStorageAvailable = await validateBucketCapacity(APPWRITE_BUCKET_ID);
     const { originalname: fileName, size } = file;
 
     if (!isStorageAvailable) {
@@ -60,48 +48,6 @@ const getFileHeadersById = async (fileId: string, header_row: number) => {
   return fileHeaders.split(",");
 };
 
-const validateStorageAvailability = async () => {
-  try {
-    const { total } = await storage.listFiles(APPWRITE_BUCKET_ID);
-
-    if (total > 120) {
-      await storage.deleteBucket(APPWRITE_BUCKET_ID);
-
-      const bucketConfig = {
-        permissions: ['create("any")', 'read("any")'],
-        fileSecurity: false,
-        name: "csv-files",
-        enabled: true,
-        maximumFileSize: 50000000,
-        allowedFileExtensions: ["csv"],
-        compression: "none",
-        encryption: true,
-        antivirus: true,
-      };
-
-      await storage.createBucket(
-        APPWRITE_BUCKET_ID,
-        bucketConfig.name,
-        bucketConfig.permissions,
-        bucketConfig.fileSecurity,
-        bucketConfig.enabled,
-        bucketConfig.maximumFileSize,
-        bucketConfig.allowedFileExtensions,
-        bucketConfig.compression,
-        bucketConfig.encryption,
-        bucketConfig.antivirus
-      );
-
-      return true;
-    }
-    return true;
-  } catch (error) {
-    console.log("error validating bucket", error);
-
-    return false;
-  }
-};
-
 const getFileDataById = async (fileId: string) => {
   const fileBuffer = await storage.getFileView(APPWRITE_BUCKET_ID, fileId);
   const data = fileBuffer.toString("utf-8");
@@ -111,8 +57,7 @@ const getFileDataById = async (fileId: string) => {
 
 const getFilesList = async () => {
   try {
-    const query: string[] = [Query.orderDesc("$createdAt"), Query.limit(150)];
-    const filesList = await storage.listFiles(APPWRITE_BUCKET_ID, query);
+    const filesList = await getBucketfiles(APPWRITE_BUCKET_ID);
 
     return filesList.files.map((file) => {
       return {
@@ -126,30 +71,12 @@ const getFilesList = async () => {
 };
 
 const validateDbAvailability = async () => {
-  const dbExists = async () => {
-    try {
-      const db = await databases.get(APPWRITE_DB_ID);
-      return db.name;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  const collectionExists = async () => {
-    try {
-      const collection = await databases.getCollection(
-        APPWRITE_DB_ID,
-        APPWRITE_COLLECTION_ID
-      );
-      return collection.name;
-    } catch (error) {
-      return false;
-    }
-  };
-
   try {
-    const existsDB = await dbExists();
-    const existsCol = await collectionExists();
+    const existsDB = await validateDBExits(APPWRITE_DB_ID);
+    const existsCol = await validateCollectionExists(
+      APPWRITE_DB_ID,
+      APPWRITE_COLLECTION_ID
+    );
 
     if (!existsDB) {
       await databases.create(APPWRITE_DB_ID, "csv-files", true);
@@ -190,7 +117,7 @@ const validateDbAvailability = async () => {
   }
 };
 
-const insertFileData = async (data: FileData) => {
+const insertFileData = async (data: { filename: string; date: Date }) => {
   try {
     await databases.createDocument(
       APPWRITE_DB_ID,
