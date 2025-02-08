@@ -10,6 +10,7 @@ const APIS = {
   headers: `POST: ${baseURL}/${apiVersion}/get-file-headers`,
   data: `POST: ${baseURL}/${apiVersion}/get-file-data`,
   list: `GET: ${baseURL}/${apiVersion}/get-files-list`,
+  stat: `GET: ${baseURL}/${apiVersion}/get-files-stat`,
 };
 
 router.get("", (req: Request, res: Response) => {
@@ -18,6 +19,7 @@ router.get("", (req: Request, res: Response) => {
     [APIS.headers]: "get file headers",
     [APIS.data]: "get file data",
     [APIS.list]: "get list of uploaded files",
+    [APIS.stat]: "get uploaded files stats based on yerly and monthly basis",
   });
 });
 

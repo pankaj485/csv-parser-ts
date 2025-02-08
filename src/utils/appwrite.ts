@@ -211,9 +211,51 @@ const validateFileCountCollection = async () => {
   }
 };
 
+const getFileStatsData = async (): Promise<{
+  [key: number]: {
+    [key: number]: number;
+  };
+}> => {
+  try {
+    const data = await databases.listDocuments(
+      APPWRITE_DB_ID,
+      APPWRITE_FILES_COUNTS_COL_ID,
+      [Query.select(["year", "month", "count"])]
+    );
+
+    let finalData: {
+      [key: number]: {
+        [key: number]: number;
+      };
+    } = {};
+
+    data.documents
+      .map((stat: any) => ({
+        year: stat.year,
+        month: stat.month,
+        count: stat.count,
+      }))
+      .forEach((stat) => {
+        const { count, month, year } = stat;
+
+        if (!finalData[year]) {
+          finalData[year] = Array(12).fill(0);
+        }
+
+        finalData[year][month] = count;
+      });
+
+    return finalData;
+  } catch (error) {
+    console.log("error getting files stat data");
+    return {};
+  }
+};
+
 export {
   databases,
   getBucketfiles,
+  getFileStatsData,
   storage,
   validateBucketCapacity,
   validateCollectionExists,
