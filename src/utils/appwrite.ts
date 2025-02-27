@@ -242,7 +242,7 @@ const getFileStatsData = async (): Promise<{
           finalData[year] = Array(12).fill(0);
         }
 
-        finalData[year][month] = count;
+        finalData[year][month - 1] = count;
       });
 
     return finalData;
